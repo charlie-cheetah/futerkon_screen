@@ -1,43 +1,18 @@
 <template>
   <q-layout view="lHh Lpr lFf">
     <q-header elevated>
-      <q-toolbar>
-        <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-          @click="toggleLeftDrawer"
-        />
-
-        <q-toolbar-title>
-          Quasar App
+      <q-toolbar class="bg-blue-grey-10">
+        <img src="./../../public/icons/apple-touch-icon.png" height="48">
+        <q-toolbar-title class="text-h4">
+          Agenda
         </q-toolbar-title>
 
-        <div>Quasar v{{ $q.version }}</div>
+        <div class="text-h4">
+          <span class="text-h6 q-mr-lg">{{ date }}</span>
+          <span class="text-h4">{{ time }}</span>
+        </div>
       </q-toolbar>
     </q-header>
-
-    <q-drawer
-      v-model="leftDrawerOpen"
-      show-if-above
-      bordered
-    >
-      <q-list>
-        <q-item-label
-          header
-        >
-          Essential Links
-        </q-item-label>
-
-        <EssentialLink
-          v-for="link in essentialLinks"
-          :key="link.title"
-          v-bind="link"
-        />
-      </q-list>
-    </q-drawer>
 
     <q-page-container>
       <router-view />
@@ -47,24 +22,22 @@
 
 <script>
 import { defineComponent, ref } from 'vue'
-import EssentialLink from 'components/EssentialLink.vue'
 
 export default defineComponent({
   name: 'MainLayout',
-
-  components: {
-    EssentialLink
-  },
-
-  setup () {
-    const leftDrawerOpen = ref(false)
-
+  setup() {
+    const now = new Date()
+    const options = { weekday: 'long', month: 'long', day: 'numeric' }
+    const date = ref(now.toLocaleDateString('pl-PL', options))
+    const time = ref(now.toLocaleTimeString('pl-PL'))
+    setInterval(()=>{
+      const now = new Date()
+      date.value = now.toLocaleDateString('pl-PL', options)
+      time.value = now.toLocaleTimeString('pl-PL')
+    }, 1000)
     return {
-      essentialLinks: linksList,
-      leftDrawerOpen,
-      toggleLeftDrawer () {
-        leftDrawerOpen.value = !leftDrawerOpen.value
-      }
+      date,
+      time
     }
   }
 })

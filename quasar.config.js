@@ -30,8 +30,8 @@ module.exports = configure(function (/* ctx */) {
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli/boot-files
     boot: [
-      
-      
+
+
     ],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
@@ -47,9 +47,8 @@ module.exports = configure(function (/* ctx */) {
       // 'eva-icons',
       // 'themify',
       // 'line-awesome',
-      // 'roboto-font-latin-ext', // this or either 'roboto-font', NEVER both!
+      'roboto-font-latin-ext', // this or either 'roboto-font', NEVER both!
 
-      'roboto-font', // optional, you are not bound to it
       'material-icons', // optional, you are not bound to it
     ],
 
@@ -60,7 +59,7 @@ module.exports = configure(function (/* ctx */) {
         node: 'node16'
       },
 
-      vueRouterMode: 'hash', // available values: 'hash', 'history'
+      vueRouterMode: 'history', // available values: 'hash', 'history'
       // vueRouterBase,
       // vueDevtools,
       // vueOptionsAPI: false,
@@ -79,7 +78,7 @@ module.exports = configure(function (/* ctx */) {
       // extendViteConf (viteConf) {},
       // viteVuePluginOptions: {},
 
-      
+
       // vitePlugins: [
       //   [ 'package-name', { ..options.. } ]
       // ]
