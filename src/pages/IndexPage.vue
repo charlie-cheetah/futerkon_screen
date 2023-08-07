@@ -1,15 +1,16 @@
 <template>
-  <q-page class="flex flex-center bg-blue-grey-14" :style-fn="styleTweak">
-    <div class="row max-inherit">
+  <q-page class="flex bg-blue-grey-14" :style-fn="styleTweak">
+    <div class="row max-inherit full-width">
       <div class="col-8 max-inherit column">
-        <q-btn text-color="black"  color="green-2" size="lg" class="col-auto">Aktualnie trwa:</q-btn>
+        <q-btn v-if="agenda?.current?.length" text-color="black"  color="green-2" size="lg" class="col-auto q-ma-xs">Aktualnie trwa:</q-btn>
         <div class="overflow-auto col" ref="scrollable">
           <div class="q-gutter-md q-pa-md">
             <q-card v-for="a in agenda.current" :key="a.agenda_id" class="current-card" ref="currentCard">
               <q-card-section class="bg-green-2 q-py-sm">
                 <div class="text-h3 q-mt-sm q-mb-xs">{{ a.name }}
-                  <q-chip dark size="md" v-if="a.settings.canceled && a.settings.canceled === 'on'" color="negative" class="q-ml-sm">odwołany!</q-chip>
-                  <q-chip dark size="md" v-if="a.settings.changed && a.settings.changed === 'on'" color="orange-10" class="q-ml-sm">zmiana!</q-chip>
+                  <q-chip dark size="lg" v-if="a.settings.canceled && a.settings.canceled === 'on'" color="negative" class="q-ml-sm">odwołany!</q-chip>
+                  <q-chip dark size="lg" v-if="a.settings.changed && a.settings.changed === 'on'" color="orange-10" class="q-ml-sm">zmiana!</q-chip>
+                  <q-chip dark size="lg" v-if="a.settings.extra_points && a.settings.extra_points === 'on'" color="blue-10" class="q-ml-sm">konkurs</q-chip>
                 </div>
               </q-card-section>
               <q-card-section horizontal>
@@ -20,7 +21,7 @@
                       <q-btn color="primary" size="lg" icon="location_on" :label="a.location.name" />
                     </div>
                   </div>
-                  <div class="q-mt-md truncate-overflow" v-html="a.post_content" />
+                  <div class="q-mt-md truncate-overflow text-h6 text-weight-regular" v-html="a.post_content" />
                 </q-card-section>
                 <div v-if="a.image.full" class="col-2 items-end">
                   <q-img
@@ -36,14 +37,15 @@
         </div>
       </div>
       <div class="col-4 max-inherit column">
-        <q-btn text-color="black" color="orange-2" size="lg" class="col-auto">Wkrótce będzie:</q-btn>
+        <q-btn v-if="agenda?.upcomming?.length" text-color="black" color="orange-2" size="lg" class="col-auto q-ma-xs">Wkrótce będzie:</q-btn>
         <div class="overflow-hidden col">
           <div class="q-gutter-md q-pa-md">
             <q-card v-for="a in agenda.upcomming" :key="a.agenda_id">
               <q-card-section class="bg-orange-2 q-py-sm">
                 <div class="text-h3 q-mt-sm q-mb-xs">{{ a.name }}
-                  <q-chip dark size="md" v-if="a.settings.canceled && a.settings.canceled === 'on'" color="negative" class="q-ml-sm">odwołany!</q-chip>
-                  <q-chip dark size="md" v-if="a.settings.changed && a.settings.changed === 'on'" color="orange-10" class="q-ml-sm">zmiana!</q-chip>
+                  <q-chip dark size="lg" v-if="a.settings.canceled && a.settings.canceled === 'on'" color="negative" class="q-ml-sm">odwołany!</q-chip>
+                  <q-chip dark size="lg" v-if="a.settings.changed && a.settings.changed === 'on'" color="orange-10" class="q-ml-sm">zmiana!</q-chip>
+                  <q-chip dark size="lg" v-if="a.settings.extra_points && a.settings.extra_points === 'on'" color="blue-10" class="q-ml-sm">konkurs</q-chip>
                 </div>
               </q-card-section>
 
@@ -65,35 +67,55 @@
 
 <script>
 import { defineComponent, ref } from 'vue'
+import { useQuasar } from 'quasar'
 
 export default defineComponent({
   name: 'IndexPage',
   setup () {
     const agenda = ref({});
     const currentCard = ref(null)
-    const nowDisplaying = ref(0)
+    const dismiss = ref(null)
+    const nowDisplaying = ref(3)
+    const $q = useQuasar()
 
     const styleTweak = (offset) =>
     {
-      return {maxHeight: offset ? `calc(100vh - ${offset}px)` : '100vh'}
+      return {maxHeight: offset ? `calc(100vh - ${offset}px)` : '100vh', height: offset ? `calc(100vh - ${offset}px)` : '100vh'}
     }
     const timer = function () {
-      console.log('tick!')
-      fetch('https://dev.futerkon.pl/wp-content/plugins/wp-vue/agenda.json')
-        .then(response => response.json())
+      fetch('https://2023.futerkon.pl/wp-json/wpvue/agenda_screen')
+        .then(response => { console.log('tick!'); return response.json();})
         .then(data => agenda.value = data)
     }
 
-    const scroll = function() {
-      if (nowDisplaying.value >= currentCard.value.length - 1) {
-        nowDisplaying.value = 0;
-      } else {
-        nowDisplaying.value = nowDisplaying.value + 1
+    window.addEventListener("offline",
+      ()=> {
+        console.log('offline!')
+        dismiss.value = $q.notify({
+          spinner: true,
+          type: "negative",
+          message: "Brak połączenia z internetem, dane mogą być nieaktualne",
+          timeout: 60 * 1000
+        })
       }
-      currentCard.value[nowDisplaying.value].$el.scrollIntoView({ behavior: "smooth", block: "end", inline: "nearest" })
+    );
+
+    window.addEventListener("online",
+      ()=> {
+        dismiss.value()
+      }
+    );
+
+    const scroll = function() {
+      if (nowDisplaying.value <= currentCard.value.length) {
+        currentCard.value?.[nowDisplaying.value]?.$el.scrollIntoView({ behavior: "smooth", block: "end", inline: "nearest" })
+        nowDisplaying.value = nowDisplaying.value + 1
+      } else {
+        nowDisplaying.value = 3;
+      }
     }
 
-    setInterval(timer(),  60 * 1000) //co minute
+    setInterval(timer(),  10 * 1000) //co minute
 
     setInterval(scroll,   10 * 1000) //co 10 sek
 
@@ -135,10 +157,10 @@ export default defineComponent({
 }
 .current-card {
   .preview{
-    max-height: 8rem;
+    max-height: 9rem;
   }
   .truncate-overflow {
-    height: 2.8rem;
+    height: 4rem;
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
