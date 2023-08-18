@@ -6,7 +6,7 @@
           <div class="q-gutter-md q-pa-md">
             <q-card v-for="a in agenda.current" :key="a.agenda_id" class="current-card" ref="currentCard">
               <q-card-section horizontal>
-                <q-card-section class="q-pa-none">
+                <q-card-section class="q-pa-none full-width">
                   <q-card-section class="q-py-sm rounded-borders-tr" :class="screenLocation?.id === a.location.id ? 'bg-indigo-10' : 'bg-indigo-2'">
                     <div class="text-h3 q-mt-sm q-mb-xs font-weigh-bold" :class="{'text-white':screenLocation?.id === a.location.id}">{{ a.name }}
                       <q-chip dark size="lg" v-if="a.settings.canceled && a.settings.canceled === 'on'" color="negative" class="q-ml-sm">odwołany!</q-chip>
@@ -87,6 +87,7 @@ export default defineComponent({
     } catch (e) {}
 
     const timer = function () {
+      console.log('fetch');
       fetch('https://2023.futerkon.pl/wp-json/wpvue/agenda_screen' + window.location.search)
         .then(response => { console.log('tick!'); return response.json();})
         .then(data => agenda.value = {current: data.current.sort((a) => a.location.id === screenLocation.value?.id ? -1 : 0), upcomming:data.upcomming})
@@ -106,21 +107,22 @@ export default defineComponent({
 
     window.addEventListener("online",
       ()=> {
+      console.log('online')
         dismiss.value()
       }
     );
 
     const scroll = function() {
       if (nowDisplaying.value === 0) {
-        nowDisplaying.value = currentCard.value.length - 1
+        nowDisplaying.value = currentCard?.value?.length - 1
       } else {
         nowDisplaying.value = 0;
       }
       currentCard.value?.[nowDisplaying.value]?.$el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" })
 
     }
-
-    setInterval(timer(),  10 * 1000) //co minute
+    timer()
+    setInterval(timer,   60 * 1000) //co minute
 
     setInterval(scroll,   10 * 1000) //co 10 sek
 
